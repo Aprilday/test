@@ -1,16 +1,19 @@
 <template>
   <div id="app">
-    <wa-wa/>
+    <!-- <wa-wa/> -->
+    <audio-player />
   </div>
 </template>
 
 <script>
-import WaWa from './components/Wawa'
+// import WaWa from './components/Wawa'
+import AudioPlayer from './components/AudioPlayer'
 
 export default {
   name: 'App',
   components: {
-    WaWa
+    // WaWa
+    AudioPlayer
   }
 }
 </script>
