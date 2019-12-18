@@ -5,8 +5,9 @@
         </audio>
         <div id="audioplayer">
             <button ref="pButton" id="pButton" class="play" @click="playAudio"></button>
-            <div id="timeline" ref="timeline">
-                <div id="playhead" ref="playhead"></div>
+            <div class="timeline" ref="timeline">
+                <div class="progress" ref="progress" style="transform: translateX(-100%);"></div>
+                <div class="playhead" ref="playhead" style="transform: translateX(0);"></div>
             </div>
         </div>
     </div>
@@ -15,14 +16,22 @@
 export default {
     data() {
         return {
-            
+            curIndex: 0, // 当前播放音频的索引
         }
     },
     created() {
         
     },
     mounted() {
+        // 当前audio标签
         this.music = this.$refs.music;
+        // 移动播放指针
+        this.playhead = this.$refs.playhead;
+        // 已播放进度条
+        this.progress = this.$refs.progress;
+        // 进度条长度，要减去播放指针的长度
+        this.progressWidth = this.$refs.timeline.clientWidth - this.$refs.playhead.clientWidth;
+        // 初始化音频事件
         this.initEvent();
     },
     methods: {
@@ -39,13 +48,13 @@ export default {
             }
         },
         initEvent() {
-            // var duration;
-            // const playhead = document.getElementById('playhead');
-            
             this.music.addEventListener("timeupdate", () => {
-                var playPercent = 100 * (this.music.currentTime / this.duration);
-                console.log(playPercent);
-                // playhead.style.marginLeft = playPercent + "%";
+                var playPercent = this.music.currentTime / this.duration;
+                if (playPercent < 1) {
+                    this.playhead.style.transform = `translateX(${playPercent * this.progressWidth}px)`
+                    this.progress.style.transform = `translateX(${-this.progressWidth + (playPercent * this.progressWidth)}px)`
+                    
+                }
             });
 
             this.music.addEventListener("canplay", () => {
@@ -58,6 +67,11 @@ export default {
             // playhead.addEventListener("canplaythrough", () => {
             //     duration = this.music.duration;
             // }, false);
+        },
+        // 重置播放器状态
+        restartStatus() {
+            this.playhead.style.transform = 'translateX(0)';
+            this.progress.style.transform = `translateX(-100%)`;
         },
         movePosition() {
             //Makes timeline clickable
@@ -107,20 +121,30 @@ export default {
     }
     .play{background: url('../assets/play.png') no-repeat;}
     .pause{background: url('../assets/pause.png') no-repeat;}
-    #timeline{
-        width: 400px;
-        height: 20px;
-        background: #ccc;
-        margin-top: 20px;
-        float: left;
-        border-radius: 15px;
+    .timeline{
+        position relative
+        width 400px
+        height 20px
+        background #ccc
+        margin-top 20px
+        float left
+        border-radius 15px
+        overflow hidden
     }
 
-    #playhead{
+    .playhead{
         width: 18px;
         height: 18px;
         border-radius: 50%;
         margin-top: 1px;
         background: #000;
+    }
+    .progress {
+        position absolute
+        left 0
+        width 100%
+        height 20px
+        background-color #666
+        border-radius 10px
     }
 </style>
