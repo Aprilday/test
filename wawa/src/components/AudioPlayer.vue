@@ -1,6 +1,6 @@
 <template>
     <div class="page-wrap">
-        <audio ref="music" crossOrigin="anonymous" type="audio/mpeg">
+        <audio ref="music" crossOrigin="anonymous" type="audio/mpeg" autoplay>
             <!-- <source > -->
         </audio>
         <div id="audioplayer">
@@ -27,33 +27,12 @@
 export default {
     data() {
         return {
-            playStatus: 'pause',
-            curIndex: 0, // 当前播放音频的索引
+            // canPlay: false, // 当前音频是否可播放
+            playStatus: 'pause', // 当前的播放状态
+            curAudioIndex: 0, // 当前播放音频的索引
             currentTime: 0, // 当前播放时间
             duration: 0, // 音频时长
-            curAudioIndex: 0,
-            list: [
-                {
-                    audioContent: 'http://127.0.0.1:9000/music1.mp3',
-                    name: '第一首歌'
-                },
-                {
-                    audioContent: 'http://127.0.0.1:9000/music2.mp3',
-                    name: '我是谁'
-                },
-                {
-                    audioContent: 'http://127.0.0.1:9000/music3.mp3',
-                    name: '你瞅啥'
-                },
-                {
-                    audioContent: 'http://127.0.0.1:9000/music4.mp3',
-                    name: '明天会更好吗'
-                },
-                {
-                    audioContent: 'http://127.0.0.1:9000/music5.mp3',
-                    name: '你走吧'
-                },
-            ]
+            list: [], // 音频列表
         }
     },
     computed: {
@@ -73,22 +52,51 @@ export default {
         }
     },
     created() {
-        
+        this.curAudioIndex = Math.round(Math.random() * 4)
+        setTimeout(() => {
+            this.list = [
+                {
+                    audioId: 1,
+                    audioContent: 'http://192.168.43.150:9000/music1.mp3',
+                    name: '第一首歌'
+                },
+                {
+                    audioId: 2,
+                    audioContent: 'http://192.168.43.150:9000/music2.mp3',
+                    name: '我是谁'
+                },
+                {
+                    audioId: 3,
+                    audioContent: 'http://192.168.43.150:9000/music3.mp3',
+                    name: '你瞅啥'
+                },
+                {
+                    audioId: 4,
+                    audioContent: 'http://192.168.43.150:9000/music4.mp3',
+                    name: '明天会更好吗'
+                },
+                {
+                    audioId: 0,
+                    audioContent: 'http://192.168.43.150:9000/music5.mp3',
+                    name: '你走吧'
+                },
+            ]
+            // this.audio.src = this.list[this.curAudioIndex].audioContent;
+            this.audio.setAttribute('src', this.list[this.curAudioIndex].audioContent)
+        }, 2000);
     },
     mounted() {
         // 当前audio标签
         this.audio = this.$refs.music;
-        setTimeout(() => {
-            this.audio.src = this.list[0].audioContent;
-        }, 800)
         // 移动播放指针
         this.playhead = this.$refs.playhead;
         // 进度条
         this.timeline = this.$refs.timeline;
         // 已播放进度条
         this.progress = this.$refs.progress;
+        this.playheadWidth = this.$refs.playhead.offsetWidth;
         // 进度条长度，要减去播放指针的长度
-        this.progressWidth = this.timeline.offsetWidth - this.$refs.playhead.offsetWidth;
+        this.progressWidth = this.timeline.offsetWidth - this.playheadWidth;
 
         // 初始化音频事件
         this.$nextTick(() => {
@@ -97,26 +105,27 @@ export default {
         
     },
     methods: {
+        // 播放或暂停音频
         playAudio() {
             const pButton = this.$refs['pButton'];
             if (this.audio.paused) {
+                console.log('playing')
                 this.audio.play();
-                // pButton.className = "";
-                // pButton.className = "pause";
             } else {
+                console.log('pausing')
                 this.audio.pause();
-                // pButton.className = "";
-                // pButton.className = "play";
             }
         },
+        // 在音频列表中点击播放其中一个音频
         playThisAudio(index) {
-            this.audio.src = this.list[index].audioContent;
+            this.audio.setAttribute('src', this.list[index].audioContent)
+            // this.audio.src = this.list[index].audioContent;
             this.curAudioIndex = index;
         },
         // 上一首/下一首
         skip(type) {
             if (type === 'pre') {
-                if (this.curAudioIndex > 1) {
+                if (this.curAudioIndex >= 1) {
                     this.curAudioIndex -= 1
                 }
             } else {
@@ -124,17 +133,20 @@ export default {
                     this.curAudioIndex += 1
                 }
             }
-            this.audio.src = this.list[this.curAudioIndex].audioContent;
+            this.audio.setAttribute('src', this.list[this.curAudioIndex].audioContent)
+            // this.audio.src = this.list[this.curAudioIndex].audioContent;
             this.audio.play();
             this.restartStatus()
         },
+        // 初始化音频相关事件
         initEvent() {
             this.audio.addEventListener("timeupdate", () => {
                 const playPercent = this.audio.currentTime / this.duration;
                 if (playPercent < 1) {
                     // 设置进度条和指针的位置
-                    this.playhead.style.transform = `translateX(${playPercent * this.progressWidth}px)`
-                    this.progress.style.transform = `translateX(${-this.progressWidth + (playPercent * this.progressWidth)}px)`
+                    let progressWidth = Math.floor(playPercent * this.progressWidth)
+                    this.playhead.style.transform = `translateX(${progressWidth}px)`
+                    this.progress.style.transform = `translateX(${-this.progressWidth - this.playheadWidth/2 + progressWidth}px)`
                     // 设置当前播放时间
                     this.currentTime = Math.floor(this.audio.currentTime);
                 }
@@ -171,6 +183,7 @@ export default {
 
 
             this.audio.addEventListener("canplay", () => {
+                // this.canPlay = true;
                 console.log('canplay')
             });
 
@@ -180,8 +193,7 @@ export default {
         },
         // 重置播放器状态
         restartStatus() {
-            // this.playhead.style.transform = 'translateX(0)';
-            // this.progress.style.transform = `translateX(-100%)`;
+            // this.canPlay = false;
             this.syncStatus(0);
         },
         // 进度条拖动或点击进度条同步
@@ -206,6 +218,7 @@ export default {
             // console.log(skipTo)
             this.syncStatus(skipTo)
         },
+        // 拖动音频进度条
         touchStart(e) {
             e.preventDefault();
             // console.log(e.targetTouches[0].pageX, 'start');
@@ -230,17 +243,17 @@ export default {
         display flex
     }
     #pButton{
-        float: left;
-        height:60px;
-        width: 60px;
-        border: none;
-        background-size: 50% 50%;
-        background-position: center;
+        float left
+        height 60px
+        width 60px
+        border none
+        background-size 50% 50%
+        background-position center
     }
     .pn-wrap {
         display flex
         justify-content space-around
-        margin: 20px auto;
+        margin: 20px auto
     }
     .prev, .next {
         width 30px
@@ -256,13 +269,13 @@ export default {
         margin-right 50px
     }
     .play{
-        background: url('../assets/play.png') no-repeat;
+        background url('../assets/play.png') no-repeat
     }
     .pause{
-        background: url('../assets/pause.png') no-repeat;
+        background url('../assets/pause.png') no-repeat
     }
     .timeline{
-        flex: 1;
+        flex 1
         position relative
         // width 400px
         height 20px
@@ -274,11 +287,11 @@ export default {
     }
 
     .playhead{
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        margin-top: 1px;
-        background: #000;
+        width 18px
+        height 18px
+        border-radius 50%
+        margin-top 1px
+        background #000
     }
     .progress {
         position absolute
@@ -289,6 +302,7 @@ export default {
         border-radius 10px
     }
     .play-list {
+        padding 0 100px
         li {
             cursor pointer
             color #333
