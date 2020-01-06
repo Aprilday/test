@@ -1,21 +1,3 @@
-# wawa
+## 目前包含两个组件，一个是类似抓娃娃的活动页面，另外一个是自定义h5音频播放器组件。
 
-> wawaj
-
-## Build Setup
-
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-```
-
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+### 运行音频播放器组件的时候，我上传了一些mp3文件，需要在资源文件夹内跑一个服务（自己有音频资源可忽略），在assets文件夹内运行 npx http-server --cors -p 9000 即可，音频文件数据目前写死在页面里，可自行更改。

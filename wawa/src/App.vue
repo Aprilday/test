@@ -9,14 +9,12 @@
 <script>
 // import WaWa from './components/Wawa'
 import AudioPlayer from './components/AudioPlayer'
-// import Test from './components/test'
 
 export default {
   name: 'App',
   components: {
     // WaWa
     AudioPlayer
-    // Test
   }
 }
 </script>

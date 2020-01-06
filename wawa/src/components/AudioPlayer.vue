@@ -16,8 +16,15 @@
             <div class="next" @click="skip('next')"></div>
             <div>{{duration | timeFormat}}</div>
         </div>
-        <!-- <div>{{currentTime | timeFormat}}</div>
-        <div>{{duration | timeFormat}}</div> -->
+        <div>
+            倍速:
+            <select ref="select" v-model="rate" @change="setRate">
+                <option value="0.5">0.5</option>
+                <option value="1">1</option>
+                <option value="1.5">1.5</option>
+                <option value="2">2</option>
+            </select>
+        </div>
         <ul class="play-list">
             <li :class="{cur: index === curAudioIndex}" v-for="(item, index) in list" :key="index" @click="playThisAudio(index)">{{item.name}}</li>
         </ul>
@@ -33,6 +40,7 @@ export default {
             currentTime: 0, // 当前播放时间
             duration: 0, // 音频时长
             list: [], // 音频列表
+            rate: 1
         }
     },
     computed: {
@@ -233,12 +241,19 @@ export default {
         touchEnd(e) {
             this.audio.play();
             // console.log(e.targetTouches[0].pageX, 'end');
+        },
+        setRate() {
+            this.audio.playbackRate = this.rate;
         }
     }
         
 }
 </script>
 <style lang="stylus" scoped>
+    button {
+        outline: none;
+        border: none;
+    }
     #audioplayer {
         display flex
     }
@@ -299,10 +314,10 @@ export default {
         width 100%
         height 20px
         background-color #666
-        border-radius 10px
+        // border-radius 10px
     }
     .play-list {
-        padding 0 100px
+        padding 30px 100px 0
         li {
             cursor pointer
             color #333
