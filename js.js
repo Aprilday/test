@@ -1,5 +1,3 @@
-console.log('hello');
-function test() {
-    console.log('aa');
+var fourSum = function(nums, target) {
     
-}
+};

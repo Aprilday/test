@@ -2,6 +2,9 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
+// import VueLazyload from 'vue-lazyload'
+import VueLazyload from './lib/index'
+Vue.use(VueLazyload) 
 
 Vue.config.productionTip = false
 

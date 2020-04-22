@@ -1,20 +1,22 @@
 <template>
   <div id="app">
     <!-- <wa-wa/> -->
-    <audio-player />
-    <!-- <test /> -->
+    <!-- <audio-player /> -->
+    <lazyload />
   </div>
 </template>
 
 <script>
 // import WaWa from './components/Wawa'
-import AudioPlayer from './components/AudioPlayer'
+// import AudioPlayer from './components/AudioPlayer'
+import Lazyload from './components/Lazyload'
 
 export default {
   name: 'App',
   components: {
     // WaWa
-    AudioPlayer
+    // AudioPlayer
+    Lazyload
   }
 }
 </script>
