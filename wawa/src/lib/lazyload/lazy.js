@@ -52,6 +52,7 @@ export default function (Vue) {
         observer: !!observer,
         observerOptions: observerOptions || DEFAULT_OBSERVER_OPTIONS
       }
+      console.log(this.options);
       this._initEvent()
       this._imageCache = new ImageCache({ max: 200 })
       this.lazyLoadHandler = throttle(this._lazyLoadHandler.bind(this), this.options.throttleWait)
@@ -64,39 +65,39 @@ export default function (Vue) {
      * @param  {Object} config params
      * @return
      */
-    config (options = {}) {
-      assign(this.options, options)
-    }
+    // config (options = {}) {
+    //   assign(this.options, options)
+    // }
 
     /**
      * output listener's load performance
      * @return {Array}
      */
-    performance () {
-      let list = []
+    // performance () {
+    //   let list = []
 
-      this.ListenerQueue.map(item => {
-        list.push(item.performance())
-      })
+    //   this.ListenerQueue.map(item => {
+    //     list.push(item.performance())
+    //   })
 
-      return list
-    }
+    //   return list
+    // }
 
     /*
      * add lazy component to queue
      * @param  {Vue} vm lazy component instance
      * @return
      */
-    addLazyBox (vm) {
-      this.ListenerQueue.push(vm)
-      if (inBrowser) {
-        this._addListenerTarget(window)
-        this._observer && this._observer.observe(vm.el)
-        if (vm.$el && vm.$el.parentNode) {
-          this._addListenerTarget(vm.$el.parentNode)
-        }
-      }
-    }
+    // addLazyBox (vm) {
+    //   this.ListenerQueue.push(vm)
+    //   if (inBrowser) {
+    //     this._addListenerTarget(window)
+    //     this._observer && this._observer.observe(vm.el)
+    //     if (vm.$el && vm.$el.parentNode) {
+    //       this._addListenerTarget(vm.$el.parentNode)
+    //     }
+    //   }
+    // }
 
     /*
      * add image listener to queue
@@ -106,20 +107,25 @@ export default function (Vue) {
      * @return
      */
     add (el, binding, vnode) {
+      // console.log('queue = ', this.ListenerQueue);
+      // console.log('el = ', el);
+
+      // console.log(el, this.ListenerQueue.length);
       if (some(this.ListenerQueue, item => item.el === el)) {
+        console.log('has same pic')
         this.update(el, binding)
         return Vue.nextTick(this.lazyLoadHandler)
       }
-
+      // console.log('binding = ', binding)
       let { src, loading, error, cors } = this._valueFormatter(binding.value)
-
+      
       Vue.nextTick(() => {
         src = getBestSelectionFromSrcset(el, this.options.scale) || src
         this._observer && this._observer.observe(el)
 
         const container = Object.keys(binding.modifiers)[0]
         let $parent
-
+        // console.log('container = ', container)
         if (container) {
           $parent = vnode.context.$refs[container]
           // if there is container passed in, try ref first, then fallback to getElementById to support the original usage
@@ -127,6 +133,7 @@ export default function (Vue) {
         }
 
         if (!$parent) {
+          // 找到上一个父元素设置了overflow overflow-y overflow-x属性，没有就返回window
           $parent = scrollParent(el)
         }
 
@@ -142,9 +149,10 @@ export default function (Vue) {
           options: this.options,
           imageCache: this._imageCache
         })
-
+        
         this.ListenerQueue.push(newListener)
-
+        // console.log(this.ListenerQueue)
+        // console.log('$parent = ', $parent);
         if (inBrowser) {
           this._addListenerTarget(window)
           this._addListenerTarget($parent)
@@ -205,21 +213,21 @@ export default function (Vue) {
      * @param  {Vue} vm Vue instance
      * @return
      */
-    removeComponent (vm) {
-      if (!vm) return
-      remove(this.ListenerQueue, vm)
-      this._observer && this._observer.unobserve(vm.el)
-      if (vm.$parent && vm.$el.parentNode) {
-        this._removeListenerTarget(vm.$el.parentNode)
-      }
-      this._removeListenerTarget(window)
-    }
+    // removeComponent (vm) {
+    //   if (!vm) return
+    //   remove(this.ListenerQueue, vm)
+    //   this._observer && this._observer.unobserve(vm.el)
+    //   if (vm.$parent && vm.$el.parentNode) {
+    //     this._removeListenerTarget(vm.$el.parentNode)
+    //   }
+    //   this._removeListenerTarget(window)
+    // }
 
     setMode (mode) {
       if (!hasIntersectionObserver && mode === modeType.observer) {
         mode = modeType.event
       }
-
+      // console.log('mode = ', mode)
       this.mode = mode // event or observer
 
       if (mode === modeType.event) {
@@ -265,6 +273,7 @@ export default function (Vue) {
       } else {
         target.childrenCount++
       }
+      // console.log(this.TargetQueue)
       return this.TargetIndex
     }
 
@@ -293,6 +302,7 @@ export default function (Vue) {
      * @return
      */
     _initListen (el, start) {
+      // console.log(start)
       this.options.ListenEvents.forEach((evt) => _[start ? 'on' : 'off'](el, evt, this.lazyLoadHandler))
     }
 
@@ -340,14 +350,20 @@ export default function (Vue) {
      */
     _lazyLoadHandler () {
       const freeList = []
+      // console.log(this.ListenerQueue);
+      // debugger
       this.ListenerQueue.forEach((listener, index) => {
         if (!listener.el || !listener.el.parentNode) {
           freeList.push(listener)
         }
         const catIn = listener.checkInView()
+        // console.log('el = ', listener.el)
+        // console.log(`${listener.el} = `, catIn)
+        // console.log(`${index} listener = `, catIn);
         if (!catIn) return
         listener.load()
       })
+      // console.log('freeList = ', freeList)
       freeList.forEach(item => {
         remove(this.ListenerQueue, item)
         item.$destroy()
@@ -359,6 +375,7 @@ export default function (Vue) {
     * @return
     */
     _initIntersectionObserver () {
+      // console.log(hasIntersectionObserver)
       if (!hasIntersectionObserver) return
       this._observer = new IntersectionObserver(this._observerHandler.bind(this), this.options.observerOptions)
       if (this.ListenerQueue.length) {
@@ -397,6 +414,7 @@ export default function (Vue) {
       const { el, bindType } = listener
 
       let src
+      // console.log(state)
       switch (state) {
         case 'loading':
           src = listener.loading
@@ -408,10 +426,11 @@ export default function (Vue) {
           src = listener.src
           break
       }
-
+      
       if (bindType) {
         el.style[bindType] = 'url("' + src + '")'
       } else if (el.getAttribute('src') !== src) {
+        // console.log('else if')
         el.setAttribute('src', src)
       }
 

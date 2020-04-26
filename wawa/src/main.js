@@ -3,8 +3,12 @@
 import Vue from 'vue'
 import App from './App'
 // import VueLazyload from 'vue-lazyload'
-import VueLazyload from './lib/index'
-Vue.use(VueLazyload) 
+import VueLazyload from './lib/lazyload/index'
+
+Vue.use(VueLazyload, {
+  listenEvents: ['scroll'],
+  preLoad: 1,
+}) 
 
 Vue.config.productionTip = false
 

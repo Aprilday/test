@@ -102,6 +102,9 @@ export default class ReactiveListener {
    */
   checkInView () {
     this.getRect()
+    // console.log(`${this.el.getAttribute('src').substr(-4)} = `, this.rect.top);
+    // console.log(this.el.getAttribute('src'))
+    // debugger
     return (this.rect.top < window.innerHeight * this.options.preLoad && this.rect.bottom > this.options.preLoadTop) &&
             (this.rect.left < window.innerWidth * this.options.preLoad && this.rect.right > 0)
   }

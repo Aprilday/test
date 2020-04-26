@@ -61,9 +61,13 @@ function some (arr, fn) {
 }
 
 function getBestSelectionFromSrcset (el, scale) {
+  console.log('getBestSelectionFromSrcset ', el);
+  console.log(el.tagName)
+  console.log(el.getAttribute('data-srcset'))
   if (el.tagName !== 'IMG' || !el.getAttribute('data-srcset')) return
-
+  
   let options = el.getAttribute('data-srcset')
+  console.log(options)
   const result = []
   const container = el.parentNode
   const containerWidth = container.offsetWidth * scale
