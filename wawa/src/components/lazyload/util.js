@@ -1,4 +1,4 @@
-import assign from './assign-deep'
+// import assign from 'assign-deep'
 
 const inBrowser = typeof window !== 'undefined' && window !== null
 
@@ -50,6 +50,7 @@ function remove (arr, item) {
 }
 
 function some (arr, fn) {
+  // console.log(arr, fn);
   let has = false
   for (let i = 0, len = arr.length; i < len; i++) {
     if (fn(arr[i])) {
@@ -61,13 +62,11 @@ function some (arr, fn) {
 }
 
 function getBestSelectionFromSrcset (el, scale) {
-  // console.log('getBestSelectionFromSrcset ', el);
-  // console.log(el.tagName)
-  // console.log(el.getAttribute('data-srcset'))
+  // console.log(el, el.getAttribute('data-srcset'))
   if (el.tagName !== 'IMG' || !el.getAttribute('data-srcset')) return
-  
+
   let options = el.getAttribute('data-srcset')
-  console.log(options)
+  console.log('options', options)
   const result = []
   const container = el.parentNode
   const containerWidth = container.offsetWidth * scale
@@ -123,7 +122,7 @@ function getBestSelectionFromSrcset (el, scale) {
       break
     }
   }
-
+  console.warn('src = ', bestSelectedSrc)
   return bestSelectedSrc
 }
 
@@ -190,11 +189,11 @@ function testSupportsPassive () {
   try {
     let opts = Object.defineProperty({}, 'passive', {
       get: function () {
-        support = true
+        return support = true;
       }
     })
     window.addEventListener('test', null, opts)
-  } catch (e) {}
+  } catch (e) { console.loe(e); }
   return support
 }
 
@@ -202,6 +201,7 @@ const supportsPassive = testSupportsPassive()
 
 const _ = {
   on (el, type, func, capture = false) {
+    // console.warn(el, type)
     if (supportsPassive) {
       el.addEventListener(type, func, {
         capture: capture,
@@ -222,7 +222,7 @@ const loadImageAsync = (item, resolve, reject) => {
     const err = new Error('image src is required')
     return reject(err)
   }
-  // console.log(item.src)
+
   image.src = item.src
   if (item.cors) {
     image.crossOrigin = item.cors
@@ -289,8 +289,11 @@ function ObjectKeys (obj) {
   } else {
     let keys = []
     for (let key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        keys.push(key)
+      // if (obj.hasOwnProperty(key)) {
+      //   keys.push(key)
+      // }
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        keys.push(key);
       }
     }
     return keys
@@ -340,7 +343,7 @@ export {
   remove,
   some,
   find,
-  assign,
+  // assign,
   noop,
   ArrayFrom,
   _,

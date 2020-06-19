@@ -8,6 +8,8 @@ import VueLazyload from './lib/lazyload/index'
 Vue.use(VueLazyload, {
   listenEvents: ['scroll'],
   preLoad: 1,
+  attempt: 1,
+  // observer: true,
 }) 
 
 Vue.config.productionTip = false
