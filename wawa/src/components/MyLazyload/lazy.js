@@ -111,7 +111,19 @@ export default function (Vue) {
         }
     
         _lazyLoadHandler() {
-            console.log('lazylaod handler')
+          const freeList = []
+          this.ListenerQueue.forEach((listener) => {
+            if (!listener.el || !listener.el.parentNode) {
+              freeList.push(listener)
+            }
+            const catIn = listener.checkInView()
+            if (!catIn) return
+            listener.load()
+          })
+          freeList.forEach(item => {
+            remove(this.ListenerQueue, item)
+            item.$destroy()
+          })
         }
         _elRenderer() {
             console.log('render')

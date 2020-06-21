@@ -3,13 +3,11 @@
 import Vue from 'vue'
 import App from './App'
 // import VueLazyload from 'vue-lazyload'
-import VueLazyload from './lib/lazyload/index'
+// import VueLazyload from './lib/lazyload/index'
+import VueLazyload from '@/components/MyLazyload/index'
 
 Vue.use(VueLazyload, {
-  listenEvents: ['scroll'],
   preLoad: 1,
-  attempt: 1,
-  // observer: true,
 }) 
 
 Vue.config.productionTip = false

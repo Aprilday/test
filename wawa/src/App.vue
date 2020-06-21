@@ -9,7 +9,8 @@
 <script>
 // import WaWa from './components/Wawa'
 // import AudioPlayer from './components/AudioPlayer'
-import Lazyload from './components/Lazyload'
+// import Lazyload from './components/Lazyload'
+import Lazyload from './components/MyLazyload'
 
 export default {
   name: 'App',
