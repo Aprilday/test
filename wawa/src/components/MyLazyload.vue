@@ -1,9 +1,14 @@
 <template>
   <div class="lazy-img">
-    <div>
-        <img v-for="(item, index) in imgs" :key="index" v-lazy="item.src" />
-    </div>
-    <button @click="changeImage">change</button>
+    <!-- <div class="empty-block">123</div>
+    <div class="empty-block">123</div>
+    <div class="empty-block">123</div> -->
+    <!-- <div class="empty-block">123</div> -->
+    <img v-for="(item, index) in imgs" :key="index" v-lazy="{ src: item.src, errorCb: imgError, successCb: imgSuccess, param: { floor: index } }" />
+    <img v-lazy="{ src: 'https://images.unsplash.com/photo-1497282003564-004631e01464?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80', loadDirectly: true, errorCb: imgError, successCb: imgSuccess, param: {name: 'aaaaa'}}">
+    <div class="empty-block">123</div>
+    <div class="empty-block">123</div>
+    <!-- <button @click="changeImage">change</button> -->
   </div>
 </template>
 
@@ -24,9 +29,9 @@ export default {
   data() {
     return {
       imgs: [
-        // {
-        //   src: 'https://images.unsplash.com/photo-1570539144352-69145033504c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1048&q=80'
-        // },
+        {
+          src: 'https://images.unsplash.com/photo-1570539144352-69145033504c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1048&q=80'
+        },
         // {
         //   src: 'https://1.png',
         // },
@@ -56,6 +61,12 @@ export default {
       // this.imgs.push({
       //   src: 'https://images.unsplash.com/photo-1474518'
       // })
+    },
+    imgError(args) {
+      console.log('error', args)
+    },
+    imgSuccess(args) {
+      console.log('success', args)
     }
   }
 }
@@ -63,9 +74,12 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="stylus" scoped>
-.lazy-img 
+.lazy-img
+  .empty-block
+    height 50vh
   img
     width 100%
+    height 300px
   button
     position fixed
     left 0

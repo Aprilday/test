@@ -1,5 +1,6 @@
 // 空白图
 const DEFAULT_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const PlaceHolderImg = require('./loading.png');
 function throttle (action, delay) {
     let timeout = null
     let lastRun = 0
@@ -46,9 +47,32 @@ class ImageCache {
       this._caches.shift()
     }
 }
-///*
+const loadImageAsync = (item, resolve, reject) => {
+  let image = new Image()
+  if (!item || !item.src) {
+    const err = new Error('image src is required')
+    return reject(err)
+  }
+
+  image.src = item.src
+  if (item.cors) {
+    image.crossOrigin = item.cors
+  }
+
+  image.onload = function () {
+    resolve({
+      naturalHeight: image.naturalHeight,
+      naturalWidth: image.naturalWidth,
+      src: image.src
+    })
+  }
+
+  image.onerror = function (e) {
+    reject(e)
+  }
+}
 class ReactiveListener {
-    constructor ({ el, src, error, loading, options, elRenderer, imageCache }) {
+    constructor ({ el, src, error, loading, options, elRenderer, imageCache, errorCb, successCb }) {
         this.el = el
         this.src = src
         this.error = error
@@ -62,6 +86,10 @@ class ReactiveListener {
         this.rect = null
         this.elRenderer = elRenderer
         this._imageCache = imageCache
+
+        this.errorCb = errorCb
+        this.successCb = successCb
+
         this.initState()
         this.render('loading')
     }
@@ -88,16 +116,65 @@ class ReactiveListener {
         this.rect = this.el.getBoundingClientRect()
     }
     
-    heckInView () {
+    checkInView () {
         this.getRect()
-        return (this.rect.top < window.innerHeight * this.options.preLoad && this.rect.bottom > this.options.preLoadTop) &&
+        return (this.rect.top < window.innerHeight * this.options.preLoad) &&
                 (this.rect.left < window.innerWidth * this.options.preLoad && this.rect.right > 0)
+    }
+
+    // renderLoading (cb) {
+    //   this.state.loading = true
+    //   loadImageAsync({
+    //     src: this.loading,
+    //     cors: this.cors
+    //   }, () => {
+    //     this.render('loading')
+    //     this.state.loading = false
+    //     cb()
+    //   }, () => {
+    //     // handler `loading image` load failed
+    //     console.log('loading error')
+    //     cb()
+    //     this.state.loading = false
+    //   })
+    // }
+
+    load () {
+      // console.log(this.state)
+      if (this.state.rendered && this.state.loaded) return
+      if (this._imageCache.has(this.src)) {
+        this.state.loaded = true
+        this.render('loaded')
+        this.state.rendered = true
+        return
       }
+  
+      // this.renderLoading(() => {
+      loadImageAsync({
+        src: this.src,
+        cors: this.cors
+      }, data => {
+        this.naturalHeight = data.naturalHeight
+        this.naturalWidth = data.naturalWidth
+        this.state.loaded = true
+        this.state.error = false
+        this.render('loaded')
+        this.state.rendered = true
+        this._imageCache.add(this.src)
+      }, err => {
+        // console.log('image error')
+        console.error(err)
+        this.state.error = true
+        this.state.loaded = false
+        this.render('error')
+      })
+      // })
+    }
 }
-//*/
+function noop() {}
 export default function (Vue) {
     return class Lazy {
-        constructor({ preLoad, loading = DEFAULT_URL, error = DEFAULT_URL, throttleWait = 200, }) {
+        constructor({ preLoad, loading = PlaceHolderImg, error = PlaceHolderImg, throttleWait = 200}) {
             this.ListenerQueue = [];
             this.options = {
                 preLoad: preLoad,
@@ -105,18 +182,21 @@ export default function (Vue) {
                 error: error,
                 throttleWait: throttleWait
             }
+            // console.log(loading)
             this.lazyLoadHandler = throttle(this._lazyLoadHandler.bind(this), this.options.throttleWait)
             this._imageCache = new ImageCache({ max: 200 })
             window.addEventListener('scroll', this.lazyLoadHandler, false);
         }
     
         _lazyLoadHandler() {
+          // console.log('srcoll');
           const freeList = []
           this.ListenerQueue.forEach((listener) => {
             if (!listener.el || !listener.el.parentNode) {
               freeList.push(listener)
             }
             const catIn = listener.checkInView()
+            console.warn(catIn)
             if (!catIn) return
             listener.load()
           })
@@ -125,15 +205,51 @@ export default function (Vue) {
             item.$destroy()
           })
         }
-        _elRenderer() {
-            console.log('render')
+        _elRenderer(listener, state) {
+          if (!listener.el) return
+          const { el } = listener
+          let src
+          switch (state) {
+            case 'loading':
+              src = DEFAULT_URL
+              el.style.backgroundImage = `url(${listener.loading})`
+              el.style.backgroundColor = '#f0f0f0'
+              el.style.backgroundSize = '100px'
+              el.style.backgroundRepeat = 'no-repeat'
+              el.style.backgroundPosition = '50%'
+              break
+            case 'error':
+              src = DEFAULT_URL
+              el.style.backgroundImage = `url(${listener.error})`
+              el.style.backgroundColor = '#f0f0f0'
+              el.style.backgroundSize = '100px'
+              el.style.backgroundRepeat = 'no-repeat'
+              el.style.backgroundPosition = '50%'
+              listener.errorCb()
+              break
+            default:
+              src = listener.src
+              el.style.backgroundColor = 'transparent'
+              el.style.backgroundImage = 'none'
+              listener.successCb();
+              break
+          }
+          el.setAttribute('src', src)
         }
         add (el, binding) {
-            let src = binding.value || binding.value.src;
-            let loading = binding.value.loading || this.loading;
-            let error = binding.value.error || this.error;
-
-            // console.log(el, binding);
+            let src = typeof binding.value === 'string' ? binding.value : binding.value.src;
+            let loading = binding.value.loading || this.options.loading;
+            let error = binding.value.error || this.options.error;
+            // 直接加载图片，绕过懒加载
+            if (binding.value.loadDirectly) {
+              el.src = src
+              return
+            }
+            // 图片加载失败回调
+            let errorCb = binding.value.errorCb ? binding.value.errorCb : noop; 
+            // 图片记载成功回调
+            let successCb = binding.value.successCb ? binding.value.successCb : noop;
+            
             Vue.nextTick(() => {
               const newListener = new ReactiveListener({
                 el,
@@ -142,7 +258,9 @@ export default function (Vue) {
                 src,
                 elRenderer: this._elRenderer.bind(this),
                 options: this.options,
-                imageCache: this._imageCache
+                imageCache: this._imageCache,
+                errorCb: errorCb.bind(this, binding.value.param),
+                successCb: successCb.bind(this, binding.value.param)
               })
 
               this.ListenerQueue.push(newListener)
