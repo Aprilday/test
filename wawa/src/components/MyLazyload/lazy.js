@@ -156,7 +156,7 @@ class ReactiveListener {
         this.state.rendered = true
         return
       }
-  
+      console.log('load func')
       this.renderLoading(() => {
         loadImageAsync({
           src: this.src,
@@ -212,6 +212,20 @@ export default function (Vue) {
             item.$destroy()
           })
         }
+
+        _setImagePlaceHolder(el, state, url) {
+          if (state === 'loading' || state === 'error') {
+            el.style.backgroundImage = `url(${url})`
+                el.style.backgroundColor = '#f0f0f0'
+                el.style.backgroundSize = '100px'
+                el.style.backgroundRepeat = 'no-repeat'
+                el.style.backgroundPosition = '50%'
+          } else {
+              el.style.backgroundColor = 'transparent'
+              el.style.backgroundImage = 'none'
+          }
+        }
+
         _elRenderer(listener, state) {
           if (!listener.el) return
           const { el } = listener
@@ -220,32 +234,26 @@ export default function (Vue) {
             case 'loading':
               src = DEFAULT_URL
               if (!listener.loadDirectly) {
-                el.style.backgroundImage = `url(${listener.loading})`
-                el.style.backgroundColor = '#f0f0f0'
-                el.style.backgroundSize = '100px'
-                el.style.backgroundRepeat = 'no-repeat'
-                el.style.backgroundPosition = '50%'
+                this._setImagePlaceHolder(el, 'loading', listener.loading)
               }
+              el.setAttribute('src', src)
               break
             case 'error':
               src = DEFAULT_URL
-              el.style.backgroundImage = `url(${listener.error})`
-              el.style.backgroundColor = '#f0f0f0'
-              el.style.backgroundSize = '100px'
-              el.style.backgroundRepeat = 'no-repeat'
-              el.style.backgroundPosition = '50%'
+              this._setImagePlaceHolder(el, 'error', listener.error)
+              el.setAttribute('src', src)
               listener.errorCb()
               listener.errorCb = noop
               break
             default:
               src = listener.src
-              el.style.backgroundColor = 'transparent'
-              el.style.backgroundImage = 'none'
+              this._setImagePlaceHolder(el)
+              el.setAttribute('src', src)
               listener.successCb();
               listener.successCb = noop
               break
           }
-          el.setAttribute('src', src)
+          
         }
         add (el, binding) {
             let src = typeof binding.value === 'string' ? binding.value : binding.value.src;
