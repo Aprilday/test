@@ -23,6 +23,11 @@ function throttle (action, delay) {
       }
     }
 }
+function remove (arr, item) {
+  if (!arr.length) return
+  const index = arr.indexOf(item)
+  if (index > -1) return arr.splice(index, 1)
+}
 class ImageCache {
     constructor ({ max }) {
       this.options = {
@@ -72,7 +77,7 @@ const loadImageAsync = (item, resolve, reject) => {
   }
 }
 class ReactiveListener {
-    constructor ({ el, src, error, loading, options, elRenderer, imageCache, errorCb, successCb }) {
+    constructor ({ el, src, error, loading, options, elRenderer, imageCache, loadDirectly, errorCb, successCb }) {
         this.el = el
         this.src = src
         this.error = error
@@ -90,7 +95,10 @@ class ReactiveListener {
         this.errorCb = errorCb
         this.successCb = successCb
 
+        this.loadDirectly = loadDirectly
+
         this.initState()
+        
         this.render('loading')
     }
     initState() {
@@ -122,22 +130,22 @@ class ReactiveListener {
                 (this.rect.left < window.innerWidth * this.options.preLoad && this.rect.right > 0)
     }
 
-    // renderLoading (cb) {
-    //   this.state.loading = true
-    //   loadImageAsync({
-    //     src: this.loading,
-    //     cors: this.cors
-    //   }, () => {
-    //     this.render('loading')
-    //     this.state.loading = false
-    //     cb()
-    //   }, () => {
-    //     // handler `loading image` load failed
-    //     console.log('loading error')
-    //     cb()
-    //     this.state.loading = false
-    //   })
-    // }
+    renderLoading (cb) {
+      this.state.loading = true
+      loadImageAsync({
+        src: this.loading,
+        cors: this.cors
+      }, () => {
+        this.render('loading')
+        this.state.loading = false
+        cb()
+      }, () => {
+        // handler `loading image` load failed
+        console.log('loading error')
+        cb()
+        this.state.loading = false
+      })
+    }
 
     load () {
       // console.log(this.state)
@@ -149,26 +157,26 @@ class ReactiveListener {
         return
       }
   
-      // this.renderLoading(() => {
-      loadImageAsync({
-        src: this.src,
-        cors: this.cors
-      }, data => {
-        this.naturalHeight = data.naturalHeight
-        this.naturalWidth = data.naturalWidth
-        this.state.loaded = true
-        this.state.error = false
-        this.render('loaded')
-        this.state.rendered = true
-        this._imageCache.add(this.src)
-      }, err => {
-        // console.log('image error')
-        console.error(err)
-        this.state.error = true
-        this.state.loaded = false
-        this.render('error')
+      this.renderLoading(() => {
+        loadImageAsync({
+          src: this.src,
+          cors: this.cors
+        }, data => {
+          this.naturalHeight = data.naturalHeight
+          this.naturalWidth = data.naturalWidth
+          this.state.loaded = true
+          this.state.error = false
+          this.render('loaded')
+          this.state.rendered = true
+          this._imageCache.add(this.src)
+        }, err => {
+          // console.log('image error')
+          console.error(err)
+          this.state.error = true
+          this.state.loaded = false
+          this.render('error')
+        })
       })
-      // })
     }
 }
 function noop() {}
@@ -189,7 +197,6 @@ export default function (Vue) {
         }
     
         _lazyLoadHandler() {
-          // console.log('srcoll');
           const freeList = []
           this.ListenerQueue.forEach((listener) => {
             if (!listener.el || !listener.el.parentNode) {
@@ -212,11 +219,13 @@ export default function (Vue) {
           switch (state) {
             case 'loading':
               src = DEFAULT_URL
-              el.style.backgroundImage = `url(${listener.loading})`
-              el.style.backgroundColor = '#f0f0f0'
-              el.style.backgroundSize = '100px'
-              el.style.backgroundRepeat = 'no-repeat'
-              el.style.backgroundPosition = '50%'
+              if (!listener.loadDirectly) {
+                el.style.backgroundImage = `url(${listener.loading})`
+                el.style.backgroundColor = '#f0f0f0'
+                el.style.backgroundSize = '100px'
+                el.style.backgroundRepeat = 'no-repeat'
+                el.style.backgroundPosition = '50%'
+              }
               break
             case 'error':
               src = DEFAULT_URL
@@ -226,12 +235,14 @@ export default function (Vue) {
               el.style.backgroundRepeat = 'no-repeat'
               el.style.backgroundPosition = '50%'
               listener.errorCb()
+              listener.errorCb = noop
               break
             default:
               src = listener.src
               el.style.backgroundColor = 'transparent'
               el.style.backgroundImage = 'none'
               listener.successCb();
+              listener.successCb = noop
               break
           }
           el.setAttribute('src', src)
@@ -241,7 +252,7 @@ export default function (Vue) {
             let loading = binding.value.loading || this.options.loading;
             let error = binding.value.error || this.options.error;
             // 直接加载图片，绕过懒加载
-            if (binding.value.loadDirectly) {
+            if (binding.value.unUseLazy) {
               el.src = src
               return
             }
@@ -256,6 +267,7 @@ export default function (Vue) {
                 loading,
                 error,
                 src,
+                loadDirectly: binding.value.loadDirectly,
                 elRenderer: this._elRenderer.bind(this),
                 options: this.options,
                 imageCache: this._imageCache,
@@ -265,8 +277,8 @@ export default function (Vue) {
 
               this.ListenerQueue.push(newListener)
     
-            //   this.lazyLoadHandler()
-            //   Vue.nextTick(() => this.lazyLoadHandler())
+              this.lazyLoadHandler()
+              Vue.nextTick(() => this.lazyLoadHandler())
             })
         }
     }

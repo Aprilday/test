@@ -5,7 +5,9 @@
     <div class="empty-block">123</div> -->
     <!-- <div class="empty-block">123</div> -->
     <img v-for="(item, index) in imgs" :key="index" v-lazy="{ src: item.src, errorCb: imgError, successCb: imgSuccess, param: { floor: index } }" />
-    <img v-lazy="{ src: 'https://images.unsplash.com/photo-1497282003564-004631e01464?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80', loadDirectly: true, errorCb: imgError, successCb: imgSuccess, param: {name: 'aaaaa'}}">
+    <img v-lazy="{ src: 'https://images.unsplash.com/photo-1497282003564-004631e01464?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80', unUseLazy: true, errorCb: imgError, successCb: imgSuccess, param: {name: 'aaaaa'}}">
+    <img v-lazy="{ src: 'https://images.unsplash.com/photo-1492019047981-388117d0e57d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80', loadDirectly: true }" alt="">
+    <img v-lazy="'https://images.unsplash.com/photo-1492019047981-388117d0e57d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80'" alt="">
     <div class="empty-block">123</div>
     <div class="empty-block">123</div>
     <!-- <button @click="changeImage">change</button> -->
@@ -78,8 +80,9 @@ export default {
   .empty-block
     height 50vh
   img
-    width 100%
-    height 300px
+    display block
+    width 150px
+    height 150px
   button
     position fixed
     left 0
